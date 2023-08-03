@@ -3,7 +3,7 @@ import requests
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 from app.helpers.config_helper import props
-from rad.getdata import retrive_from_influx
+#from rad.getdata import retrive_from_influx
 
 
 def csv_to_influxdb(df, influx_client):

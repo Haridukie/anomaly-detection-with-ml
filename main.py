@@ -15,8 +15,12 @@ from starlette.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from app.helpers.config_helper import props
 from app.routers.user import router as user_router
-from rad.getdata import retrive_from_influx
+#from rad.getdata import retrive_from_influx
 from getminio import read_minio_object
+
+
+from pydantic import BaseModel  # Make sure to include this import
+
 
 __author__ = "Dinesh Sinnarasse"
 __copyright__ = "Copyright 2023, Enterprise Minds"
@@ -48,6 +52,12 @@ app.add_middleware(
 app.include_router(user_router)
 
 
+class MinioEventPayload(BaseModel):
+    EventName: str
+    Key: str
+    Records: list
+
+
 def init_database_connection():
     """
     Mehtod to initiate DBConnection
@@ -70,13 +80,34 @@ def perform_healthcheck():
     return {'healthcheck': 'Everything OK!'}
 
 
-@app.get("/download")
+@app.get("/download-hari")
 async def download_bucket_object():
     try:
         influx_client = init_database_connection()
 
         read_minio_object(
             influx_client=influx_client)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+#tis is added by L.balasrinivasan
+@app.post("/download")
+async def download_bucket_object(payload: MinioEventPayload):
+
+    #local_file_path = f"D:\\Anomaly\\Anomaly-detection\\{object_name}"
+    try:
+        influx_client = init_database_connection()
+        print(payload.Key)
+        object_name = payload.Key 
+        print(object_name[4:])
+        bucket_name="dev"
+        object_name = object_name[4:]
+
+        read_minio_object(bucket_name,object_name,
+                          influx_client=influx_client)
+        # Call perform_insertdata with the file path
+        # perform_insertdata(file_path=local_file_path)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

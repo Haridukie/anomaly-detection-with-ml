@@ -5,33 +5,14 @@ from minio.error import S3Error
 import io
 import pandas as pd
 from setinflux import csv_to_influxdb
-from app.helpers.config_helper import props
+
+minio_client = minio.Minio('10.0.0.106:9000',
+                           'eMjoaYzDwm0y1ar5Zykq', 'MozPAyV5tgR8G3a3OYq3FV6j6TXX9Zp2x97auhrH', secure=False)
 
 
-def init_minio_connection():
-    """
-    Mehtod to initiate DBConnection
-    :return: database_object
-    """
+def read_minio_object(bucket_name, object_name, influx_client):
     try:
-        connection_minio = props.get_minio_connection()
-        admin = props.get_minio_admin()
-        key = props.get_minio_key()
-        client = minio.Minio(connection_minio,
-                             admin, key, secure=True)
-    except Exception:
-        raise Exception("Database connection error")
-    return client
 
-
-# minio_client = minio.Minio('play.min.io','minioadmin', 'minioadmin', secure = True)
-
-
-def read_minio_object(influx_client):
-    try:
-        minio_client = init_minio_connection()
-        bucket_name = props.get_minio_bucket()
-        object_name = props.get_minio_object()
         # Read the object
         obj = minio_client.get_object(bucket_name, object_name)
         object_data = obj.read()
@@ -40,5 +21,9 @@ def read_minio_object(influx_client):
         print(df)
         csv_to_influxdb(df, influx_client)
 
+        # Process the object data as needed
+        print(f"Object data:\n{object_data.decode()}")
+
     except S3Error as e:
         print(f"Error : {e}")
+
