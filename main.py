@@ -15,9 +15,11 @@ from starlette.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from app.helpers.config_helper import props
 from app.routers.user import router as user_router
-#from rad.getdata import retrive_from_influx
+from rad.getdata import retrive_from_influx
 from getminio import read_minio_object
-
+from retrive import get_data_from_influxdb
+from datetime import datetime
+from fastapi.responses import JSONResponse
 
 from pydantic import BaseModel  # Make sure to include this import
 
@@ -98,9 +100,7 @@ async def download_bucket_object(payload: MinioEventPayload):
     #local_file_path = f"D:\\Anomaly\\Anomaly-detection\\{object_name}"
     try:
         influx_client = init_database_connection()
-        print(payload.Key)
         object_name = payload.Key 
-        print(object_name[4:])
         bucket_name="dev"
         object_name = object_name[4:]
 
@@ -112,6 +112,22 @@ async def download_bucket_object(payload: MinioEventPayload):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+
+#this is for priyadharshini
+@app.get("/data/{start_time}/{end_time}/{interval}")
+def get_data(start_time: datetime, end_time: datetime, interval: str):
+    try:
+        print(f"Received request: start_time={start_time}, end_time={end_time}, interval={interval}")
+        # Pass the parameters to the function in the data_handler module
+        data = get_data_from_influxdb(start_time, end_time, interval)
+        return {"data": data}
+    except Exception as e:
+        # Print the exception for debugging purposes
+        print("Error fetching data:", e)
+        # Return an error response
+        return JSONResponse(status_code=500, content={"error": "Failed to fetch data from InfluxDB."})
 
 @app.get("/getdata")
 async def get_datafrom_influx():

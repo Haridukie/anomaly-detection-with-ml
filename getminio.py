@@ -16,14 +16,12 @@ def read_minio_object(bucket_name, object_name, influx_client):
         # Read the object
         obj = minio_client.get_object(bucket_name, object_name)
         object_data = obj.read()
-        print(type(object_data))
+    
         df = pd.read_csv(io.BytesIO(object_data))
-        print(df)
         csv_to_influxdb(df, influx_client)
 
         # Process the object data as needed
-        print(f"Object data:\n{object_data.decode()}")
-
+        
     except S3Error as e:
         print(f"Error : {e}")
 
